@@ -1,4 +1,4 @@
-package week_2
+package main
 
 func  userController()  interface{}{
 	val, err := listUserService()
@@ -10,5 +10,5 @@ func  userController()  interface{}{
 		result["code"] = 200
 		result["data"] = val
 	}
-
+	return result
 }

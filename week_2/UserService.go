@@ -1,7 +1,8 @@
-package week_2
+package main
 
 func listUserService() (interface{}, error)  {
 	// 查询之前的逻辑
-	result, err := ListUser()
+	_, _ = ListUser()
 	// 查询之后的逻辑
+	return nil, nil
 }
