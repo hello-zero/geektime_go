@@ -11,7 +11,7 @@ import (
 // 2：如果异常匹配无结果，则要wrap向上层返回
 
 func ListUser() (interface{}, error)  {
-	db, err := sql2.Open("mysql", "root:44805809pjy@tcp(localhost:6606)/d_infosec")
+	db, err := sql2.Open("mysql", "root:pass@tcp(localhost:3306)/d_infosec")
 	if err != nil {
 		fmt.Println(err)
 	}
