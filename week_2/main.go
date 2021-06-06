@@ -1,8 +1,10 @@
 package main
 
+import "fmt"
+
 func main()  {
-	_, err := ListUser()
-	if err != nil {
-		return 
-	}
+	task_id := "123weq"
+	results := userController(task_id)
+	fmt.Println(results)
+
 }
