@@ -15,6 +15,7 @@ import (
 1. 基于 errgroup 实现一个 http server 的启动和关闭 ，以及 linux signal 信号的注册和处理，要保证能够一个退出，全部注销退出。
 **/
 func serveApp() error {
+	return errors.New("firrst")
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request){
 		fmt.Fprintln(resp, "Hello, QCon!")
@@ -26,6 +27,7 @@ func serveApp() error {
 }
 
 func serveDebug() error{
+	return nil
 	if err := http.ListenAndServe("127.0.0.1:8081", http.DefaultServeMux); err !=nil{
 		log.Fatal(err)
 	}
@@ -34,27 +36,39 @@ func serveDebug() error{
 
 func main()  {
 	group, ctx := errgroup.WithContext(context.Background())
+	// 初始化连接
+	mux := http.NewServeMux()
+	mux.HandleFunc("/hello", func(resp http.ResponseWriter, req *http.Request){
+		fmt.Fprintln(resp, "Hello, QCon!")
+	})
+	server := http.Server{
+		Handler: mux,
+		Addr: ":8080",
+	}
 
+	serverOut := make(chan int)
+
+	// group1 启动server
 	group.Go(func() error {
-		mux := http.NewServeMux()
-		mux.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request){
-			fmt.Fprintln(resp, "Hello, QCon!")
-		})
-		if err := http.ListenAndServe("0.0.0.0:8080", mux); err != nil {
-			return err
-		}
-		return nil
+		return server.ListenAndServe()
 	})
 
+	// group2 关闭server
 	group.Go(func() error {
-		if err := http.ListenAndServe("127.0.0.1:8081", http.DefaultServeMux); err !=nil{
-			log.Fatal(err)
+		select {
+		case <- serverOut:
+			fmt.Println("server exit")
+			// func退出会触发g.cancel, ctx.done会收到信号
+		case <- ctx.Done():
+			fmt.Println("errgoup exit")
 		}
-		return nil
+		return server.Shutdown(ctx)
 	})
 
+	// group3 signal的注册
 	group.Go(func() error {
-		quit := make(chan os.Signal, 0)
+		quit := make(chan os.Signal)
+		// sigint 用户ctrl+c, sigterm程序退出
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		select {
 		case <- ctx.Done():
@@ -67,8 +81,6 @@ func main()  {
 	})
 
 	err := group.Wait()
-	if err != nil {
-		fmt.Println(err)
-	}
+	fmt.Println(err)
 	fmt.Println(ctx.Err())
 }
